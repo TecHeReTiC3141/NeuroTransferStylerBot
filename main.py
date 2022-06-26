@@ -2,8 +2,8 @@ from scripts.client_handlers import *
 
 
 def register_handlers(dp: Dispatcher):
-    dp.register_message_handler(start, commands=['start'])
-    dp.register_message_handler(echo_photo, content_types=[ContentType.PHOTO])
+    dp.register_message_handler(start, commands=['start'], state='*')
+    dp.register_message_handler(echo_origin, content_types=[ContentType.PHOTO])
 
 
 async def on_start(_):
