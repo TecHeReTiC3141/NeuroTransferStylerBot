@@ -3,7 +3,12 @@ from scripts.client_handlers import *
 
 def register_handlers(dp: Dispatcher):
     dp.register_message_handler(start, commands=['start'], state='*')
-    dp.register_message_handler(echo_origin, content_types=[ContentType.PHOTO])
+    dp.register_message_handler(echo_origin, content_types=[ContentType.PHOTO],
+                                state=BotStates.origin)
+    dp.register_callback_query_handler(load_your_style, text='own_picture',
+                                       state=BotStates.origin)
+    dp.register_message_handler(style, content_types=[ContentType.PHOTO],
+                                state=BotStates.loading_style)
 
 
 async def on_start(_):
