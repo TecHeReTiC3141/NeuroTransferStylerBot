@@ -18,7 +18,7 @@ async def echo_origin(message: Message, state: FSMContext):
     origin_file = await bot.get_file(message.photo[0].file_id)
     await state.update_data(origin=origin_file.file_path)
     # await bot.send_photo(message.from_user.id, message.photo, 'Your original')
-    await state.update_data(origin=message.photo)
+
     keyboard = InlineKeyboardMarkup()
     own = InlineKeyboardButton('Your own picture',
                                callback_data='own_picture')
@@ -40,9 +40,14 @@ async def load_your_style(query: CallbackQuery):
 async def style(message: Message, state: FSMContext):
 
     await bot.send_photo(message.from_user.id, message.photo[0].file_id, 'Your style')
-    style = bot.get_file(message.photo[0].file_id)
-    await state.update_data(style=style)
+    style = await bot.get_file(message.photo[0].file_id)
+    await state.update_data(style=style.file_path)
+
     await message.reply('Style transfering is in progress. Please wait')
     await BotStates.net_is_working.set()
 
-    print(f'style', await state.get_data())
+    data = await state.get_data()
+    print(f'1', data)
+    origin, style = data.values()
+    print(origin, style)
+    print(bot.get_file_url(origin), bot.get_file_url(style))
