@@ -11,13 +11,12 @@ async def start(message: Message):
 
 
 async def echo_origin(message: Message, state: FSMContext):
-    photo_ids = set()
     logging.info(message.photo)
-    for photo_set in message.photo:
-        photo_ids.add(''.join(photo_set.file_id))
-        handler_logger.info(photo_set.file_id)
 
     await bot.send_photo(chat_id=message.from_user.id, photo=message.photo[0].file_id)
+
+    origin_file = await bot.get_file(message.photo[0].file_id)
+    await state.update_data(origin=origin_file.file_path)
     # await bot.send_photo(message.from_user.id, message.photo, 'Your original')
     await state.update_data(origin=message.photo)
     keyboard = InlineKeyboardMarkup()
@@ -41,7 +40,8 @@ async def load_your_style(query: CallbackQuery):
 async def style(message: Message, state: FSMContext):
 
     await bot.send_photo(message.from_user.id, message.photo[0].file_id, 'Your style')
-    await state.update_data(style=message.photo)
+    style = bot.get_file(message.photo[0].file_id)
+    await state.update_data(style=style)
     await message.reply('Style transfering is in progress. Please wait')
     await BotStates.net_is_working.set()
 
