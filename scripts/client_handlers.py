@@ -1,5 +1,6 @@
 from scripts.bot_init import *
 from scripts.bot_states import *
+from scripts.slow_algorithm_of_style_transfering import *
 
 handler_logger = logging.getLogger('client')
 
@@ -13,7 +14,7 @@ async def start(message: Message):
 async def echo_origin(message: Message, state: FSMContext):
     logging.info(message.photo)
 
-    await bot.send_photo(chat_id=message.from_user.id, photo=message.photo[0].file_id)
+    await bot.send_photo(chat_id=message.from_user.id, photo=message.photo[0].file_id, caption='Your origin')
 
     origin_file = await bot.get_file(message.photo[0].file_id)
     await state.update_data(origin=origin_file.file_path)
@@ -50,4 +51,7 @@ async def style(message: Message, state: FSMContext):
     print(f'1', data)
     origin, style = data.values()
     print(origin, style)
-    print(bot.get_file_url(origin), bot.get_file_url(style))
+    origin_url, style_url = bot.get_file_url(origin), bot.get_file_url(style)
+    print(origin_url, style_url)
+    transfer = StyleTransfer(cnn, cnn_normalization_mean, cnn_normalization_std)
+    # output = transfer(origin_url, style_url)
