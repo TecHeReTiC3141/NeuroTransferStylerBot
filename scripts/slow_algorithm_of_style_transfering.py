@@ -12,9 +12,9 @@ from pathlib import Path
 
 import requests
 from io import BytesIO
-import warnings
-
-warnings.filterwarnings('ignore')
+# import warnings
+#
+# warnings.filterwarnings('ignore')
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -41,20 +41,19 @@ def image_loader(image_url) -> torch.tensor:
 
 IMAGES_DIR = Path('../images')
 
-
 unloader = transforms.ToPILImage()  # reconvert into PIL image
 
 plt.ion()
 
 
 def imshow(tensor: torch.tensor, title=None):
-    image = tensor.cpu().clone()  # we clone the tensor to not do changes on it
-    image = image.squeeze(0)  # remove the fake batch dimension
+    image = tensor.cpu().clone()
+    image = image.squeeze(0)
     image = unloader(image)
     plt.imshow(image)
     if title is not None:
         plt.title(title)
-    plt.pause(0.001)  # pause a bit so that plots are updated
+    plt.pause(0.001)
 
 
 class ContentLoss(nn.Module):
@@ -169,6 +168,16 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
     return model, style_losses, content_losses
 
 
+def img_to_bytes(img: Image) -> BytesIO:
+    byte_arr = BytesIO()
+
+    img_res = img.resize((512, 512))
+
+    plt.imshow(img_res)
+    img_res.save(byte_arr, format='JPEG')
+    return byte_arr
+
+
 class StyleTransfer(nn.Module):
 
     def __init__(self, cnn: nn.Sequential, normalization_mean: torch.tensor, normalization_std: torch.tensor, ):
@@ -178,12 +187,12 @@ class StyleTransfer(nn.Module):
         self.normalization_std = normalization_std
 
     def forward(self, content_img_url: str, style_img_url: str, num_steps=300,
-                style_weight=1000000, content_weight=1):
+                style_weight=1000000, content_weight=1) -> BytesIO:
         print('Building the style transfer model..')
         try:
             content_img = image_loader(content_img_url)
             style_img = image_loader(style_img_url)
-            input_img = content_img.clone()
+            input_img: torch.tensor = content_img.clone()
         except Exception as e:
             print(e)
         model, style_losses, content_losses = get_style_model_and_losses(self.cnn,
@@ -191,8 +200,6 @@ class StyleTransfer(nn.Module):
                                                                          self.normalization_std,
                                                                          style_img, content_img)
 
-        # We want to optimize the input and not the model parameters so we
-        # update all the requires_grad fields accordingly
         input_img.requires_grad_(True)
         model.requires_grad_(False)
 
@@ -237,15 +244,18 @@ class StyleTransfer(nn.Module):
         # a last correction...
         with torch.no_grad():
             input_img.clamp_(0, 1)
-        plt.figure()
+        imshow(input_img)
+        outputs_col = len(list(Path('outputs').glob('*.pt')))
+        torch.save(input_img, f'outputs/tensor{outputs_col}.pt')
+        res = unloader(input_img.clone().cpu().squeeze(0))
 
-        imshow(input_img, title='Input Image')
-        return unloader(input_img)
+        plt.figure()
+        plt.imshow(res)
+
+        return img_to_bytes(res)
 
 
 cnn = models.vgg19(pretrained=True).features.to(device).eval()
 
 cnn_normalization_mean = torch.tensor([0.485, 0.456, 0.406]).to(device)
 cnn_normalization_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
-
-transfer = StyleTransfer(cnn, cnn_normalization_mean, cnn_normalization_std)
