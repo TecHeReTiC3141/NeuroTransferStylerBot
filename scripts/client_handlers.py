@@ -6,13 +6,26 @@ handler_logger = logging.getLogger('client')
 
 
 async def start(message: Message):
-    await message.answer(f'Hello, {message.from_user.username}!')
-    await message.answer(f'Please, send original image')
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add('Begin')
+    await message.answer(f'''Hello, {message.from_user.username}! 
+    I can transfer of one image to another one. Please, try''',reply_markup=keyboard)
+    await BotStates.select.set()
+
+
+async def select_action(message: Message):
+    keyboard = InlineKeyboardMarkup()
+    style_trans = InlineKeyboardButton('Style Transfering', callback_data='style_transfering')
+    gan = InlineKeyboardButton('StyleGAN', callback_data='style_gan')
+    keyboard.row(style_trans, gan)
+    await message.reply('What would you like to do?', reply_markup=keyboard)
+
+
+async def load_your_origin(query: CallbackQuery):
+    await query.message.reply('Please, load your origin image')
     await BotStates.origin.set()
-    print('start')
 
 
-async def echo_origin(message: Message, state: FSMContext):
+async def transfer_origin(message: Message, state: FSMContext):
     logging.info(message.photo)
 
     await bot.send_photo(chat_id=message.from_user.id, photo=message.photo[0].file_id, caption='Your origin')
@@ -29,7 +42,6 @@ async def echo_origin(message: Message, state: FSMContext):
     keyboard.row(own, prepared)
     await message.reply('Please choose how to load style',
                         reply_markup=keyboard)
-    print(f'loading_origin')
 
 
 async def load_your_style(query: CallbackQuery):
@@ -57,6 +69,6 @@ async def style(message: Message, state: FSMContext):
     output = transfer(origin_url, style_url)
 
     await message.answer('Result:')
-    await message.answer_photo(photo=output, caption='My output')
-
-    await state.finish()
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add('Again')
+    await message.answer_photo(photo=output, caption='My output', reply_markup=keyboard)
+    await BotStates.select.set()
