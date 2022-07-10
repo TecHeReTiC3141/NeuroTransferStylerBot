@@ -12,6 +12,7 @@ from pathlib import Path
 
 import requests
 from io import BytesIO
+
 # import warnings
 #
 # warnings.filterwarnings('ignore')
@@ -172,10 +173,12 @@ def img_to_bytes(img: Image) -> BytesIO:
     byte_arr = BytesIO()
 
     img_res = img.resize((512, 512))
+    out_dir = Path('outputs')
 
-    plt.imshow(img_res)
-    img_res.save(byte_arr, format='JPEG')
-    return byte_arr
+    img_res.save(out_dir / 'result.png', format='PNG')
+    img_res.save(byte_arr, format='PNG')
+
+    return byte_arr.getvalue()
 
 
 class StyleTransfer(nn.Module):
@@ -241,16 +244,11 @@ class StyleTransfer(nn.Module):
 
             optimizer.step(closure)
 
-        # a last correction...
         with torch.no_grad():
             input_img.clamp_(0, 1)
-        imshow(input_img)
-        outputs_col = len(list(Path('outputs').glob('*.pt')))
-        torch.save(input_img, f'outputs/tensor{outputs_col}.pt')
-        res = unloader(input_img.clone().cpu().squeeze(0))
+        # imshow(input_img)
 
-        plt.figure()
-        plt.imshow(res)
+        res = unloader(input_img.cpu().squeeze(0))
 
         return img_to_bytes(res)
 

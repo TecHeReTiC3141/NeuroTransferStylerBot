@@ -50,11 +50,13 @@ async def style(message: Message, state: FSMContext):
 
     origin_url, style_url = bot.get_file_url(origin), bot.get_file_url(style)
     print(origin_url, style_url)
-    transfer = StyleTransfer(cnn, cnn_normalization_mean, cnn_normalization_std)
+
     await message.answer('In progress..')
+
+    transfer = StyleTransfer(cnn, cnn_normalization_mean, cnn_normalization_std)
     output = transfer(origin_url, style_url)
 
     await message.answer('Result:')
     await message.answer_photo(photo=output, caption='My output')
 
-    await BotStates.net_is_working.set()
+    await state.finish()
