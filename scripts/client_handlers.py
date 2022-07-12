@@ -67,8 +67,9 @@ async def style(message: Message, state: FSMContext):
 
     transfer = StyleTransfer(cnn, cnn_normalization_mean, cnn_normalization_std)
     output = transfer(origin_url, style_url)
-
-    await message.answer('Result:')
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add('Again')
-    await message.answer_photo(photo=output, caption='My output', reply_markup=keyboard)
+    if output == 'Error':
+        await message.answer('Problem with loading of image. Please, try again', reply_markup=keyboard)
+    else:
+        await message.answer_photo(photo=output, caption='My output', reply_markup=keyboard)
     await BotStates.select.set()

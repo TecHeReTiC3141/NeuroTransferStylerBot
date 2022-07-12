@@ -23,7 +23,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 imsize = 512 if torch.cuda.is_available() else 256  # use small size if no gpu
 
 loader = transforms.Compose([
-    transforms.Resize((imsize, imsize)),
+    transforms.Resize(imsize),
     transforms.ToTensor()
 ])
 
@@ -33,18 +33,12 @@ def get_image(img_url: str) -> BytesIO:
 
 
 def image_loader(image_url) -> torch.tensor:
-    image = Image.open(get_image(image_url))
-
-    # fake batch dimension required to fit network's input dimensions
+    image = Image.open(image_url) # TODO add get_image
     image = loader(image).unsqueeze(0)
     return image.to(device, torch.float)
 
 
-IMAGES_DIR = Path('../images')
-
 unloader = transforms.ToPILImage()  # reconvert into PIL image
-
-plt.ion()
 
 
 def imshow(tensor: torch.tensor, title=None):
@@ -140,8 +134,6 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
             name = 'pool_{}'.format(i)
         elif isinstance(layer, nn.BatchNorm2d):
             name = 'bn_{}'.format(i)
-        else:
-            raise RuntimeError('Unrecognized layer: {}'.format(layer.__class__.__name__))
 
         model.add_module(name, layer)
 
@@ -196,8 +188,11 @@ class StyleTransfer(nn.Module):
             content_img = image_loader(content_img_url)
             style_img = image_loader(style_img_url)
             input_img: torch.tensor = content_img.clone()
+            print(content_img.shape, style_img.shape, input_img.shape)
         except Exception as e:
             print(e)
+            return "Error"
+
         model, style_losses, content_losses = get_style_model_and_losses(self.cnn,
                                                                          self.normalization_mean,
                                                                          self.normalization_std,
@@ -244,12 +239,11 @@ class StyleTransfer(nn.Module):
 
             optimizer.step(closure)
 
+        imshow(input_img)
         with torch.no_grad():
             input_img.clamp_(0, 1)
-        # imshow(input_img)
 
         res = unloader(input_img.cpu().squeeze(0))
-
         return img_to_bytes(res)
 
 
