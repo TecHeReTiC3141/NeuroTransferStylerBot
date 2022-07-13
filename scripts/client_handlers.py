@@ -1,6 +1,6 @@
 from scripts.bot_init import *
 from scripts.bot_states import *
-from scripts.slow_algorithm_of_style_transfering import *
+from scripts.style_transfering import *
 
 handler_logger = logging.getLogger('client')
 
@@ -61,9 +61,6 @@ async def style(message: Message, state: FSMContext):
     origin, style = data.values()
 
     origin_url, style_url = bot.get_file_url(origin), bot.get_file_url(style)
-    print(origin_url, style_url)
-
-    await message.answer('In progress..')
 
     transfer = StyleTransfer(cnn, cnn_normalization_mean, cnn_normalization_std)
     output = transfer(origin_url, style_url)
