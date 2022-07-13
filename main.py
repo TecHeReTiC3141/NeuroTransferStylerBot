@@ -1,9 +1,13 @@
 from scripts.client_handlers import *
 
 
-def register_handlers(dp: Dispatcher):
+async def register_handlers(dp: Dispatcher):
     dp.register_message_handler(start, commands=['start'], state='*')
-    dp.register_message_handler(echo_origin, content_types=[ContentType.PHOTO],
+    dp.register_message_handler(select_action, lambda message: 'Begin' in message.text or 'Again' in message.text,
+                                state=BotStates.select)
+    dp.register_callback_query_handler(load_your_origin, text='style_transfering',
+                                       state=BotStates.select, )
+    dp.register_message_handler(transfer_origin, content_types=[ContentType.PHOTO],
                                 state=BotStates.origin)
     dp.register_callback_query_handler(load_your_style, text='own_picture',
                                        state=BotStates.origin)
@@ -11,8 +15,16 @@ def register_handlers(dp: Dispatcher):
                                 state=BotStates.loading_style)
 
 
+async def add_commands(dp: Dispatcher):
+    await dp.bot.set_my_commands([
+        BotCommand("start", "Запустить бота"),
+        BotCommand("help", 'Описание бота')
+    ])
+
+
 async def on_start(_):
-    register_handlers(disp)
+    await register_handlers(disp)
+    await add_commands(disp)
     print('Bot is online')
     logging.info('Bot has been launched')
 
