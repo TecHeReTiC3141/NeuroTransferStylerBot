@@ -2,8 +2,6 @@ from scripts.bot_init import *
 from scripts.bot_states import *
 from scripts.style_transfering import *
 
-handler_logger = logging.getLogger('client')
-
 
 async def start(message: Message):
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add('Begin')
@@ -26,8 +24,6 @@ async def load_your_origin(query: CallbackQuery):
 
 
 async def transfer_origin(message: Message, state: FSMContext):
-    logging.info(message.photo)
-
     await bot.send_photo(chat_id=message.from_user.id, photo=message.photo[0].file_id, caption='Your origin')
 
     origin_file = await bot.get_file(message.photo[0].file_id)

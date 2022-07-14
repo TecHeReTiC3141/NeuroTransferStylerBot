@@ -26,7 +26,6 @@ async def on_start(_):
     await register_handlers(disp)
     await add_commands(disp)
     print('Bot is online')
-    logging.info('Bot has been launched')
 
 
 if __name__ == '__main__':
