@@ -59,8 +59,6 @@ def gram_matrix(input):
 
     G = torch.mm(features, features.t())  # compute the gram product
 
-    # we 'normalize' the values of the gram matrix
-    # by dividing by the number of element in each feature maps.
     return G.div(a * b * c * d)
 
 
@@ -103,7 +101,6 @@ class vgg(nn.Module):
 
         for layer_num, layer in enumerate(self.model):
             x = layer(x)
-
             if layer_num in self.features:  # Если слой находится в списке,
                 features.append(x)  # то запоминаем выход слоя для расчета лосса
 

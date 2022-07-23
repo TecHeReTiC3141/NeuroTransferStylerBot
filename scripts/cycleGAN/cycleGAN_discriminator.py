@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -19,7 +17,7 @@ warnings.filterwarnings('ignore')
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-class ResudalBlock(nn.Module):
+class DiscrBlock(nn.Module):
 
     def __init__(self, in_channels, out_channels, stride=1):
         super().__init__()
@@ -47,8 +45,8 @@ class Discriminator(nn.Module):
 
         layers = []
         for ind, feature in enumerate(self.features[1:]):
-            layers.append(ResudalBlock(self.features[ind], feature,
-                                       stride=2 if ind != len(self.features) - 2 else 1))
+            layers.append(DiscrBlock(self.features[ind], feature,
+                                     stride=2 if ind != len(self.features) - 2 else 1))
         layers.append(nn.Conv2d(self.features[-1], 1, kernel_size=4,
                                 stride=1, padding=1, padding_mode='reflect'))
         self.model = nn.Sequential(*layers)
@@ -56,8 +54,4 @@ class Discriminator(nn.Module):
     def forward(self, x):
         x = self.initial(x)
         return F.sigmoid(self.model(x))
-
-
-class Generator(nn.Module):
-    pass
 
