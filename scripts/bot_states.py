@@ -4,6 +4,6 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 class BotStates(StatesGroup):
     select = State()
     origin = State()
-    choosing_way_to_load_style = State()
+    cycle_gan_mode = State()
     loading_style = State()
     style = State()

@@ -25,9 +25,9 @@ def get_image(img_url: str) -> BytesIO:
     return BytesIO(requests.get(img_url).content)
 
 
-def image_loader(image_url, imsize=256, norm=False) -> torch.tensor:
+def image_loader(image_url, imsize=256, no_resize=False, norm=False) -> torch.tensor:
     loader = transforms.Compose([
-        transforms.Resize(imsize),
+        transforms.Resize(imsize) if not no_resize else nn.Identity(),
         transforms.ToTensor(),
         transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)) if norm else nn.Identity()
     ])
