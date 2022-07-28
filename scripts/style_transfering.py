@@ -21,6 +21,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 WEIGHTS = torch.load('model_weights/vgg19.pth')
 
+
 def get_image(img_url: str) -> BytesIO:
     return BytesIO(requests.get(img_url).content)
 
@@ -160,37 +161,39 @@ class StyleTransfer(nn.Module):
         style_features = model(style_img)
 
         run = [0]
-        while run[0] <= num_steps:
-            def closure():
-                with torch.no_grad():
-                    input_img.clamp_(0, 1)
+        with torch.autograd.set_detect_anomaly(True):
+            while run[0] <= num_steps:
+                def closure():
+                    with torch.no_grad():
+                        input_img.clamp_(0, 1)
 
-                optimizer.zero_grad()
+                    optimizer.zero_grad()
 
-                style_score = 0
-                content_score = 0
+                    style_score = 0
+                    content_score = 0
 
-                generated_features = model(input_img)
+                    generated_features = model(input_img)
 
-                for gen_features, con_features, st_features in zip(
-                        generated_features,
-                        content_features,
-                        style_features
-                ):
-                    content_score += content_loss(con_features, gen_features)
-                    style_score += style_loss(st_features, gen_features)
+                    for gen_features, con_features, st_features in zip(
+                            generated_features,
+                            content_features,
+                            style_features
+                    ):
+                        content_score += content_loss(con_features, gen_features)
+                        style_score += style_loss(st_features, gen_features)
 
-                style_score *= style_weight
-                content_score *= content_weight
-                loss = style_score + content_score
-                loss.backward()
+                    style_score *= style_weight
+                    content_score *= content_weight
+                    loss = style_score + content_score
+                    loss.backward()
 
-                run[0] += 1
-                if run[0] % 100 == 0:
-                    print(f'epoch: {run[0]}, style_loss: {style_score.item():.4f}, content_loss: {content_score.item():.4f}')
-                return style_score + content_score
+                    run[0] += 1
+                    if run[0] % 100 == 0:
+                        print(
+                            f'epoch: {run[0]}, style_loss: {style_score.item():.4f}, content_loss: {content_score.item():.4f}')
+                    return style_score + content_score
 
-            optimizer.step(closure)
+                optimizer.step(closure)
 
         imshow(input_img)
         with torch.no_grad():

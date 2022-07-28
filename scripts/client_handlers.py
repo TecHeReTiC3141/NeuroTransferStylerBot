@@ -1,6 +1,7 @@
 from scripts.bot_init import *
 from scripts.bot_states import *
 from scripts.cycleGAN.cyclegan import *
+import asyncio
 
 
 async def start(message: Message):
@@ -40,8 +41,11 @@ async def transfer_origin(message: Message, state: FSMContext):
 
         data = await state.get_data()
         origin_url = bot.get_file_url(data['origin'])
-        cycleGan = CycleGAN('h2z')
-        res = cycleGan(origin_url)
+
+        loop = asyncio.get_event_loop()
+
+        cycleGan = await loop.run_in_executor(None, CycleGAN, 'h2z')
+        res = await loop.run_in_executor(None, cycleGan, origin_url)
 
         keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add('Again')
         await message.answer_photo(photo=res, caption='My output', reply_markup=keyboard)
@@ -58,14 +62,6 @@ async def transfer_origin(message: Message, state: FSMContext):
         keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add('Again')
         await message.answer_photo(photo=res, caption='My output', reply_markup=keyboard)
         await BotStates.select.set()
-    # keyboard = InlineKeyboardMarkup()
-    # own = InlineKeyboardButton('Your own picture',
-    #                            callback_data='own_picture')
-    # prepared = InlineKeyboardButton('One of our styles',
-    #                                 callback_data='our_styles')
-    # keyboard.row(own, prepared)
-    # await message.reply('Please choose how to load style',
-    #                     reply_markup=keyboard)
 
 
 async def load_your_style(query: CallbackQuery):
@@ -86,8 +82,9 @@ async def style(message: Message, state: FSMContext):
 
     origin_url, style_url = bot.get_file_url(origin), bot.get_file_url(style)
 
-    transfer = StyleTransfer(cnn, cnn_normalization_mean, cnn_normalization_std)
-    output = transfer(origin_url, style_url)
+    loop = asyncio.get_event_loop()
+    transfer = await loop.run_in_executor(None, StyleTransfer, cnn, cnn_normalization_mean, cnn_normalization_std)
+    output = await loop.run_in_executor(None, transfer, origin_url, style_url)
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add('Again')
     if output == 'Error':
         await message.answer('Problem with loading of image. Please, try again', reply_markup=keyboard)
