@@ -2,7 +2,7 @@ from scripts.client_handlers import *
 
 
 async def register_handlers(dp: Dispatcher):
-    dp.register_message_handler(start, commands=['start'], state='*')
+    dp.register_message_handler(start, commands=['start', 'help'], state='*')
     dp.register_message_handler(select_action, lambda message: 'Begin' in message.text or 'Again' in message.text,
                                 state=BotStates.select)
     dp.register_callback_query_handler(load_your_origin,

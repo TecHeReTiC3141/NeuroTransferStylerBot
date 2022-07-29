@@ -7,7 +7,8 @@ import asyncio
 async def start(message: Message):
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add('Begin')
     await message.answer(f'''Hello, {message.from_user.username}! 
-    I can transfer of one image to another one. Please, try''',reply_markup=keyboard)
+I can transfer style of one image to another one.
+Besides, I can turn horses in picture into zebras.  Please, try''',reply_markup=keyboard)
     await BotStates.select.set()
 
 
@@ -15,8 +16,8 @@ async def select_action(message: Message):
     keyboard = InlineKeyboardMarkup()
     style_trans = InlineKeyboardButton('Style Transfering', callback_data='style_transfering')
     h_to_z = InlineKeyboardButton('Turn horse to zebra', callback_data='h2z')
-    z_to_h = InlineKeyboardButton('Turn zebra to horse', callback_data='z2h')
-    keyboard.row(style_trans, h_to_z, z_to_h)
+    # z_to_h = InlineKeyboardButton('Turn zebra to horse', callback_data='z2h')
+    keyboard.row(style_trans, h_to_z)
     await message.reply('What would you like to do?', reply_markup=keyboard)
 
 
@@ -86,8 +87,8 @@ async def style(message: Message, state: FSMContext):
     transfer = await loop.run_in_executor(None, StyleTransfer, cnn, cnn_normalization_mean, cnn_normalization_std)
     output = await loop.run_in_executor(None, transfer, origin_url, style_url)
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add('Again')
-    if output == 'Error':
-        await message.answer('Problem with loading of image. Please, try again', reply_markup=keyboard)
+    if isinstance(output, Exception):
+        await message.answer('Problem occurred. Please, try again', reply_markup=keyboard)
     else:
         await message.answer_photo(photo=output, caption='My output', reply_markup=keyboard)
     await BotStates.select.set()
