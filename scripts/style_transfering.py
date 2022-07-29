@@ -21,14 +21,18 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 WEIGHTS = torch.load('model_weights/vgg19.pth')
 
+IMG_SIZE = 256
+
+
 def get_image(img_url: str) -> BytesIO:
     return BytesIO(requests.get(img_url).content)
 
 
-def image_loader(image_url, imsize=256) -> torch.tensor:
+def image_loader(image_url, imsize=IMG_SIZE, no_resize=False, norm=False) -> torch.tensor:
     loader = transforms.Compose([
-        transforms.Resize(imsize),
-        transforms.ToTensor()
+        transforms.Resize(imsize) if not no_resize else nn.Identity(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)) if norm else nn.Identity()
     ])
     image = Image.open(get_image(image_url))
     image = loader(image).unsqueeze(0)
@@ -59,8 +63,6 @@ def gram_matrix(input):
 
     G = torch.mm(features, features.t())  # compute the gram product
 
-    # we 'normalize' the values of the gram matrix
-    # by dividing by the number of element in each feature maps.
     return G.div(a * b * c * d)
 
 
@@ -103,21 +105,19 @@ class vgg(nn.Module):
 
         for layer_num, layer in enumerate(self.model):
             x = layer(x)
-
             if layer_num in self.features:  # Если слой находится в списке,
                 features.append(x)  # то запоминаем выход слоя для расчета лосса
 
         return features
 
 
-def img_to_bytes(img: Image) -> BytesIO:
+def img_to_bytes(img: Image, imsize=IMG_SIZE) -> BytesIO:
     byte_arr = BytesIO()
     width, height = img.size
     if width > height:
-        img_res = img.resize((512, int(512 * height / width)))
+        img_res = img.resize((imsize, int(imsize * height / width)))
     else:
-        img_res = img.resize((int(512 * width / height), 512))
-    print(img_res.size)
+        img_res = img.resize((int(imsize * width / height), imsize))
     out_dir = Path('outputs')
 
     img_res.save(out_dir / 'result.png', format='PNG')
@@ -162,44 +162,49 @@ class StyleTransfer(nn.Module):
         style_features = model(style_img)
 
         run = [0]
-        while run[0] <= num_steps:
-            def closure():
-                with torch.no_grad():
-                    input_img.clamp_(0, 1)
+        try:
+            with torch.autograd.set_detect_anomaly(True):
+                while run[0] <= num_steps:
+                    def closure():
+                        with torch.no_grad():
+                            input_img.clamp_(0, 1)
 
-                optimizer.zero_grad()
+                        optimizer.zero_grad()
 
-                style_score = 0
-                content_score = 0
+                        style_score = 0
+                        content_score = 0
 
-                generated_features = model(input_img)
+                        generated_features = model(input_img.clone())
 
-                for gen_features, con_features, st_features in zip(
-                        generated_features,
-                        content_features,
-                        style_features
-                ):
-                    content_score += content_loss(con_features, gen_features)
-                    style_score += style_loss(st_features, gen_features)
+                        for gen_features, con_features, st_features in zip(
+                                generated_features,
+                                content_features,
+                                style_features
+                        ):
+                            content_score += content_loss(con_features, gen_features)
+                            style_score += style_loss(st_features, gen_features)
 
-                style_score *= style_weight
-                content_score *= content_weight
-                loss = style_score + content_score
-                loss.backward()
+                        style_score *= style_weight
+                        content_score *= content_weight
+                        loss = style_score + content_score
+                        loss.backward()
 
-                run[0] += 1
-                if run[0] % 100 == 0:
-                    print(f'epoch: {run[0]}, style_loss: {style_score.item():.4f}, content_loss: {content_score.item():.4f}')
-                return style_score + content_score
+                        run[0] += 1
+                        if run[0] % 100 == 0:
+                            print(
+                                f'epoch: {run[0]}, style_loss: {style_score.item():.4f}, content_loss: {content_score.item():.4f}')
+                        return style_score + content_score
 
-            optimizer.step(closure)
+                    optimizer.step(closure)
 
-        imshow(input_img)
-        with torch.no_grad():
-            input_img.clamp_(0, 1)
+            # imshow(input_img)
+            with torch.no_grad():
+                input_img.clamp_(0, 1)
 
-        res = unloader(input_img.cpu().squeeze(0))
-        return img_to_bytes(res)
+            res = unloader(input_img.cpu().squeeze(0))
+            return img_to_bytes(res)
+        except Exception as e:
+            return e
 
 
 cnn = models.vgg19().features.to(device).eval()

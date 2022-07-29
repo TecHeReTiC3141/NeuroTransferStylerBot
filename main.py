@@ -2,10 +2,12 @@ from scripts.client_handlers import *
 
 
 async def register_handlers(dp: Dispatcher):
-    dp.register_message_handler(start, commands=['start'], state='*')
+    dp.register_message_handler(start, commands=['start', 'help'], state='*')
     dp.register_message_handler(select_action, lambda message: 'Begin' in message.text or 'Again' in message.text,
                                 state=BotStates.select)
-    dp.register_callback_query_handler(load_your_origin, text='style_transfering',
+    dp.register_callback_query_handler(load_your_origin,
+                                       lambda call: any(['style_transfering' in call.data,
+                                                         'h2z' in call.data, 'z2h' in call.data]),
                                        state=BotStates.select, )
     dp.register_message_handler(transfer_origin, content_types=[ContentType.PHOTO],
                                 state=BotStates.origin)
