@@ -120,7 +120,6 @@ def img_to_bytes(img: Image, imsize=IMG_SIZE) -> BytesIO:
         img_res = img.resize((int(imsize * width / height), imsize))
     out_dir = Path('outputs')
 
-    img_res.save(out_dir / 'result.png', format='PNG')
     img_res.save(byte_arr, format='PNG')
 
     return byte_arr.getvalue()

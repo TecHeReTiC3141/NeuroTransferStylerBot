@@ -25,4 +25,4 @@ class CycleGAN(nn.Module):
         grid = torchvision.utils.make_grid(gen_img.detach(), normalize=True)
         ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
 
-        return img_to_bytes(Image.fromarray(ndarr))
+        return img_to_bytes(Image.fromarray(ndarr), 400)
