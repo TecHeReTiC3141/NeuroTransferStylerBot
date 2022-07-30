@@ -21,7 +21,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 WEIGHTS = torch.load('model_weights/vgg19.pth')
 
-IMG_SIZE = 256
+IMG_SIZE = 128
 
 
 def get_image(img_url: str) -> BytesIO:
@@ -202,7 +202,7 @@ class StyleTransfer(nn.Module):
                 input_img.clamp_(0, 1)
 
             res = unloader(input_img.cpu().squeeze(0))
-            return img_to_bytes(res)
+            return img_to_bytes(res, 256)
         except Exception as e:
             return e
 
