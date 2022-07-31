@@ -21,7 +21,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 WEIGHTS = torch.load('model_weights/vgg19.pth')
 
-IMG_SIZE = 128
+IMG_SIZE = 256
 
 
 def get_image(img_url: str) -> BytesIO:

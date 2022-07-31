@@ -9,3 +9,12 @@ Style Transfering was implemented in `style_transfering.py`, cycleGAN - in `cycl
 ## Heroku
 Project was deployed to heroku.com. But because of restrictions connected with 
 free plan on heroku pictures have to be shrunk very much so quality would be far from good.
+
+## Examples of work
+### Horse to zebra:
+
+![cycleGAN](images/GAN_test.png)
+
+### Style Transfering
+
+![style transfering](images/style_transfering_test.png)

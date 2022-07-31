@@ -20,9 +20,9 @@ class CycleGAN(nn.Module):
             self.gen.load_state_dict(Z_to_H_weights)
 
     def forward(self, img_url):
-        img = image_loader(img_url, imsize=IMG_SIZE, norm=True)
+        img = image_loader(img_url, imsize=512, norm=True)
         gen_img = self.gen(img)
         grid = torchvision.utils.make_grid(gen_img.detach(), normalize=True)
         ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
 
-        return img_to_bytes(Image.fromarray(ndarr), 400)
+        return img_to_bytes(Image.fromarray(ndarr), 512)
