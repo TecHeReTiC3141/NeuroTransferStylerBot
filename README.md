@@ -18,3 +18,5 @@ free plan on heroku pictures have to be shrunk very much so quality would be far
 ### Style Transfering
 
 ![style transfering](images/style_transfering_test.png)
+
+Here is [demonstration](https://youtu.be/_rhG538VT2U) of the bot's work on local machine CPU
